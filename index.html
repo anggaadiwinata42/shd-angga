@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studi Hadis Digital </title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f8f9fa;
+        }
+
+        /* Tombol Toggle Mobile */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1000;
+            background-color: #0f5132;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* Sidebar Kiri */
+        .sidebar {
+            width: 280px;
+            background-color: #111b15;
+            color: #ecf0f1;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            z-index: 999;
+            flex-shrink: 0;
+            border-right: 1px solid #192c20;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background-color: #0f5132;
+            color: white;
+            text-align: center;
+            border-bottom: 1px solid #146c43;
+        }
+
+        .sidebar-header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-header p {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        /* Menu Navigasi Berjenjang (Nested Menu) */
+        .menu-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px 0;
+        }
+
+        .menu-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .menu-container::-webkit-scrollbar-thumb {
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 3px;
+        }
+
+        .menu-item {
+            display: block;
+            width: 100%;
+            padding: 12px 20px;
+            color: #bdc3c7;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+            background: none;
+            border-top: none;
+            border-right: none;
+            border-bottom: none;
+            text-align: left;
+        }
+
+        .menu-item:hover {
+            color: #ffffff;
+            background-color: #192a20;
+            border-left-color: #ffd700;
+        }
+
+        .menu-item.active {
+            color: #ffffff;
+            background-color: #142319;
+            border-left-color: #ffd700;
+            font-weight: bold;
+        }
+
+        /* Submenu Tingkat 1 (Heading 1) */
+        .heading-1-btn {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: #fff;
+            background-color: #16241c;
+            margin-top: 5px;
+        }
+
+        .heading-1-btn .arrow {
+            transition: transform 0.3s;
+            font-size: 10px;
+        }
+
+        .heading-1-btn.open .arrow {
+            transform: rotate(90deg);
+        }
+
+        .submenu-h1 {
+            display: none;
+            background-color: #1b2e23;
+        }
+
+        .submenu-h1.show {
+            display: block;
+        }
+
+        /* Submenu Tingkat 2 (Heading 2 / Bab) */
+        .heading-2-btn {
+            padding-left: 35px;
+            font-size: 13.5px;
+            color: #d1d8e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .heading-2-btn.open .arrow {
+            transform: rotate(90deg);
+        }
+
+        .submenu-h2 {
+            display: none;
+            background-color: #223a2c;
+        }
+
+        .submenu-h2.show {
+            display: block;
+        }
+
+        /* Submenu Tingkat 3 (Pasal/Sub-bab) */
+        .submenu-h2 .menu-item {
+            padding-left: 50px;
+            font-size: 12.5px;
+            color: #a5b1c2;
+        }
+
+        /* Konten Utama (Iframe Area) */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: #ffffff;
+        }
+
+        /* Lapisan Overlay untuk Penutup Menu di Mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 998;
+        }
+
+        /* RESPONSIVE BREAKPOINT (MOBILE & TABLET) */
+        @media (max-width: 768px) {
+            .mobile-toggle {
+                display: block;
+            }
+
+            .sidebar {
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                left: -280px; /* Sembunyi di luar layar */
+            }
+
+            .sidebar.active {
+                left: 0; /* Muncul dari kiri */
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+
+            .main-content {
+                padding-top: 60px; /* Beri ruang untuk tombol mobile toggle */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Tombol Navigasi Mobile -->
+    <button class="mobile-toggle" id="mobileToggle">Menu ☰</button>
+    
+    <!-- Lapisan Gelap Belakang Menu saat Aktif di Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sisi Navigasi Kiri (Nested Sidebar) -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h1>HADIS DIGITAL</h1>
+            <p>Sistem Informasi & Kajian Turats</p>
+        </div>
+
+        <div class="menu-container">
+            
+            <!-- (Sesuai No. 5) SISIPAN MENU HOME / COVER DI BAGIAN DEPAN -->
+            <a href="homepage.html" target="konten-frame" class="menu-item active" onclick="closeSidebarMobile(this)">
+                🏠 Beranda / Cover Buku
+            </a>
+
+            <!-- KELOMPOK UTAMA: MASTER E-BOOK ZUHUD (Heading 1) -->
+            <button class="menu-item heading-1-btn" onclick="toggleSubmenu('sub-master')">
+                📚 1. E-Book: Praktik Zuhud <span class="arrow">▶</span>
+            </button>
+            <div class="submenu-h1" id="sub-master">
+                
+                <!-- Sub Menu Bab I (Heading 2) -->
+                <button class="menu-item heading-2-btn" onclick="toggleSubmenu('sub-bab1')">
+                    📖 Bab I: Konsep & Hadis <span class="arrow">▶</span>
+                </button>
+                <div class="submenu-h2" id="sub-bab1">
+                    <a href="bab1.html" target="konten-frame" class="menu-item" onclick="closeSidebarMobile(this)">Semua Pembahasan Bab I</a>
+                    <a href="bab1.html#pasalA" target="konten-frame" class="menu-item" onclick="closeSidebarMobile(this)">A. Sikap Hati Bukan Totalitas Fisik</a>
+                    <a href="bab1.html#pasalB" target="konten-frame" class="menu-item" onclick="closeSidebarMobile(this)">B. Kesederhanaan Nabi SAW</a>
+                    <a href="bab1.html#pasalC" target="konten-frame" class="menu-item" onclick="closeSidebarMobile(this)">C. Pengelolaan Harta</a>
+                </div>
+
+                <!-- Sub Menu Bab II (Heading 2) -->
+                <button class="menu-item heading-2-btn" onclick="toggleSubmenu('sub-bab2')">
+                    📖 Bab II: Penerapan Nilai <span class="arrow">▶</span>
+                </button>
+                <div class="submenu-h2" id="sub-bab2">
+                    <a href="bab2.html" target="konten-frame" class="menu-item" onclick="closeSidebarMobile(this)">Semua Pembahasan Bab II</a>
+                    <a href="bab2.html#pasalA" target="konten-frame" class="menu-item" onclick="closeSidebarMobile(this)">A. Melalui Rasa Qana'ah</a>
+                    <a href="bab2.html#pasalB" target="konten-frame" class="menu-item" onclick="closeSidebarMobile(this)">B. Konsumsi & Media Sosial</a>
+                </div>
+
+                <!-- Sub Menu Bab III (Heading 2) -->
+                <button class="menu-item heading-2-btn" onclick="toggleSubmenu('sub-bab3')">
+                    📖 Bab III: Tantangan Zaman <span class="arrow">▶</span>
+                </button>
+                <div class="submenu-h2" id="sub-bab3">
+                    <a href="bab3.html" target="konten-frame" class="menu-item" onclick="closeSidebarMobile(this)">Semua Pembahasan Bab III</a>
+                    <a href="bab3.html#pasalA" target="konten-frame" class="menu-item" onclick="closeSidebarMobile(this)">A. Budaya Materialisme</a>
+                    <a href="bab3.html#pasalB" target="konten-frame" class="menu-item" onclick="closeSidebarMobile(this)">B. Distraksi Digital</a>
+                </div>
+            </div>
+
+            <!-- KELOMPOK UTAMA: REVIEW PLATFORM DIGITAL -->
+            <button class="menu-item heading-1-btn" onclick="toggleSubmenu('sub-reviews')">
+                🔍 2. Review Aplikasi & Website <span class="arrow">▶</span>
+            </button>
+            <div class="submenu-h1" id="sub-reviews">
+                <a href="review_apk_android.pdf" target="konten-frame" class="menu-item" onclick="closeSidebarMobile(this)">📱 APK Android Hadisku</a>
+                <a href="review_desktop.pdf" target="konten-frame" class="menu-item" onclick="closeSidebarMobile(this)">💻 Desktop Mausu'ah</a>
+                <a href="review_website_1.pdf" target="konten-frame" class="menu-item" onclick="closeSidebarMobile(this)">🌐 Website HadithHub</a>
+                <a href="review_website_2.pdf" target="konten-frame" class="menu-item" onclick="closeSidebarMobile(this)">🤖 Website Alminasa.ai</a>
+                <a href="review_website_3.pdf" target="konten-frame" class="menu-item" onclick="closeSidebarMobile(this)">🦅 Website Sunnah.com</a>
+                <a href="review_ebook_shd.pdf" target="konten-frame" class="menu-item" onclick="closeSidebarMobile(this)">📑 E-Book Metode Al-Iraqy</a>
+            </div>
+
+            <!-- (Sesuai No. 4) MENU TERAKHIR: TENTANG PENULIS -->
+            <a href="author.html" target="konten-frame" class="menu-item" onclick="closeSidebarMobile(this)" style="margin-top: 10px; border-top: 1px solid #1f3325;">
+                👤 Tentang Penulis
+            </a>
+
+        </div>
+    </aside>
+
+    <!-- Area Penayangan Konten Dinamis -->
+    <main class="main-content">
+        <iframe src="homepage.html" name="konten-frame" id="mainIframe"></iframe>
+    </main>
+
+    <script>
+        // Fungsi Interaksi Buka-Tutup Submenu Berjenjang
+        function toggleSubmenu(id) {
+            const targetSubmenu = document.getElementById(id);
+            const triggerButton = event.currentTarget;
+            
+            targetSubmenu.classList.toggle('show');
+            triggerButton.classList.toggle('open');
+        }
+
+        // Operasional Kontrol Sidebar Mobile
+        const mobileToggle = document.getElementById('mobileToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        mobileToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+        });
+
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+        });
+
+        // Menutup sidebar otomatis saat link menu diklik pada layar mobile
+        function closeSidebarMobile(element) {
+            const allLinks = document.querySelectorAll('.menu-item');
+            allLinks.forEach(link => link.classList.remove('active'));
+            
+            element.classList.add('active');
+
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>
